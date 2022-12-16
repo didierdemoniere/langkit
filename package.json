@@ -1,0 +1,58 @@
+{
+  "name": "langkit",
+  "version": "0.0.0",
+  "description": "DSL and expression interpreter toolkit",
+  "main": "build/main/index.js",
+  "types": "build/main/index.d.ts",
+  "module": "build/module/index.js",
+  "repository": "https://github.com/didierdemoniere/langkit",
+  "scripts": {
+    "dev": "run-p format:dev test:dev",
+    "build": "rimraf ./build && run-p build:*",
+    "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "lint": "eslint . --ext .ts",
+    "format": "run-script-os",
+    "format:win32": "prettier --config .prettierrc \"./src/**/*.ts\" --write",
+    "format:darwin:linux": "prettier --config .prettierrc 'src/**/*.ts' --write",
+    "format:default": "prettier --config .prettierrc 'src/**/*.ts' --write",
+    "format:dev": "run-script-os",
+    "format:dev:win32": "onchange \"src/**/*.ts\" -- prettier --write {{changed}}",
+    "format:dev:darwin:linux": "onchange 'src/**/*.ts' -- prettier --write {{changed}}",
+    "format:dev:default": "onchange 'src/**/*.ts' -- prettier --write {{changed}}",
+    "test": "jest",
+    "test:dev": "jest --watchAll"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run test && npm run format && npm run lint"
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.8",
+    "@typescript-eslint/eslint-plugin": "^5.31.0",
+    "@typescript-eslint/parser": "^5.31.0",
+    "eslint": "^8.20.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-jest": "^26.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.1",
+    "jest": "^28.1.3",
+    "npm-run-all": "^4.1.5",
+    "onchange": "^7.1.0",
+    "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
+    "run-script-os": "^1.1.6",
+    "ts-jest": "^28.0.7",
+    "typescript": "^4.7.4"
+  },
+  "keywords": [
+    "lexer",
+    "tokenizer",
+    "parser",
+    "generator",
+    "compiler"
+  ],
+  "author": "Didier Demoniere",
+  "license": "MIT"
+}
