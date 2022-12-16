@@ -1,6 +1,6 @@
 {
   "name": "langkit",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "DSL and expression interpreter toolkit",
   "main": "build/main/index.js",
   "types": "build/main/index.d.ts",
