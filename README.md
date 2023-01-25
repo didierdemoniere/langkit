@@ -1,6 +1,6 @@
 # langkit
 
-A compact and expressive DSL and expression interpreter toolkit 
+A compact and expressive DSL and expression interpreter toolkit
 
 ## Install
 
@@ -18,24 +18,21 @@ const calcLexer = createLexer({
   number: /\d+(?:\.\d+)?/,
   space: {
     pattern: /\s+/,
-    skip: true
-  }
-})
+    skip: true,
+  },
+});
 
 const calculate = createParser(calcLexer, (h) => {
-  return h.fromTokens(
-    'add',
-    ['number', 'plus', 'number'],
-    ([left, _, right]) => {
-      return Number(left.value) + Number(right.value)
-    },
-  );
-})
+  return h.fromTokens(['number', 'plus', 'number'], ([left, _, right]) => {
+    return Number(left.value) + Number(right.value);
+  });
+});
 
-console.log(calculate('5 + 45'))
+console.log(calculate('5 + 45'));
 // => 50
 ```
 
 ## examples
+
 - [calculator](https://github.com/didierdemoniere/langkit/tree/main/src/examples/calculator.ts)
 - [JSON parser](https://github.com/didierdemoniere/langkit/tree/main/src/examples/json.ts)
