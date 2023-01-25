@@ -1,58 +1,58 @@
+import { Reducer } from './types';
+const toString = Object.prototype.toString;
 
-export function transform(
-  ast: any,
-  spec: any,
-  path: Array<string | number> = [],
-  context?: any,
-  isRoot = true,
-) {
-  if (isRoot && !context) {
-    context = { ast };
-  }
-
-  if (Array.isArray(ast)) {
-    ast = [...ast];
-    for (let index = 0; index < ast.length; index++) {
-      ast[index] = transform(
-        ast[index],
-        spec,
-        path.concat([index]),
-        context,
-        false,
-      );
-    }
-  } else if (typeof ast === 'object') {
-    ast = { ...ast };
-    for (const key in ast) {
-      const children = transform(
-        ast[key],
-        spec,
-        path.concat([key]),
-        context,
-        false,
-      );
-      ast[key] = !spec[key] ? children : spec[key](children, path, context);
-    }
-  }
-  return isRoot ? spec.$(ast) : ast;
+/**
+ * checks if the value is a plain object
+ * @param value
+ * @returns true if the value is a plain object
+ */
+export function isPlainObject(value?: any): value is object {
+  return toString.call(value) === `[object Object]`;
 }
 
 /**
- * create an interpreter/transpiler from a parser and a spec
+ * recursively folds over an ast
+ * @param reducer
+ * @param ast
+ * @param path
+ * @param parent
+ * @returns
+ */
+export function fold<T, R>(
+  reducer: Reducer<T, R>,
+  ast: T,
+  path: Array<string | number> = [],
+  parent?: T,
+): R {
+  return reducer(
+    (Array.isArray(ast)
+      ? ast.map((child, i) => fold(reducer, child, path.concat([i]), ast))
+      : isPlainObject(ast)
+      ? Object.keys(ast).map((key) =>
+          fold(reducer, (ast as any)[key], path.concat([key]), ast),
+        )
+      : []
+    ).filter((child) => child !== undefined),
+    ast,
+    path,
+    parent,
+  ) as R;
+}
+
+/**
+ * create an interpreter/transpiler from a parser and a reducer
  * @see src/examples/calculator.ts
  *
  * @param parser a function that produce an AST from source
- * @param spec an object used to interpret/transpile the AST by reducing the tree
- * @param createContext create a shared context
+ * @param function used to interpret/transpile the AST by reducing the tree
  * @returns an interpreter/transpiler
  */
-export function createTransformer(
-  parser: (source: string) => any,
-  spec: any,
-  createContext: (ast: any) => any = (ast) => ({ ast }),
+export function createTransformer<T, R>(
+  parser: (source: string) => T,
+  reducer: Reducer<T, R>,
 ) {
   return (source: string) => {
     const ast = parser(source);
-    return transform(ast, spec, [], createContext(ast));
+    return fold(reducer, ast);
   };
 }

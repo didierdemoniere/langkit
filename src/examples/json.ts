@@ -22,38 +22,33 @@ export const jsonParser = createParser(jsonLexer, (h) => {
   let object: Rule<{ [k: string]: any }>;
   let array: Rule<any[]>;
 
-  h.or('value', (value) => {
-    const stringLiteral = h.fromTokens(
-      'StringLiteral',
-      ['string'],
-      ([quoted]) => quoted.value.slice(1, -1),
+  h.or((value) => {
+    const stringLiteral = h.fromTokens(['string'], ([quoted]) =>
+      quoted.value.slice(1, -1),
     );
 
     object = h.rule(
-      'object',
       () => {
         const entry = h.rule(
-          'entry',
-          () => [stringLiteral, h.fromTokens('colon', ['colon']), value],
+          () => [stringLiteral, h.fromTokens(['colon']), value],
           ([key, _, value]) => [key, value] as const,
         );
 
         return [
-          h.fromTokens('lCurly', ['lCurly']),
-          h.list('entries', entry, 'comma'),
-          h.fromTokens('rCurly', ['rCurly']),
+          h.fromTokens(['lCurly']),
+          h.list(entry, 'comma'),
+          h.fromTokens(['rCurly']),
         ];
       },
       ([_, entries]) => Object.fromEntries(entries),
     );
 
     array = h.rule(
-      'array',
       () => {
         return [
-          h.fromTokens('lSquare', ['lSquare']),
-          h.list('values', value, 'comma'),
-          h.fromTokens('rSquare', ['rSquare']),
+          h.fromTokens(['lSquare']),
+          h.list(value, 'comma'),
+          h.fromTokens(['rSquare']),
         ];
       },
       ([_, values]) => values,
@@ -61,14 +56,14 @@ export const jsonParser = createParser(jsonLexer, (h) => {
 
     return [
       stringLiteral,
-      h.fromTokens('NumberLiteral', ['number'], ([t]) => Number(t.value)),
-      h.fromTokens('True', ['true'], () => true),
-      h.fromTokens('False', ['false'], () => false),
-      h.fromTokens('Null', ['null'], () => null),
+      h.fromTokens(['number'], ([t]) => Number(t.value)),
+      h.fromTokens(['true'], () => true),
+      h.fromTokens(['false'], () => false),
+      h.fromTokens(['null'], () => null),
       object,
       array,
     ];
   });
 
-  return h.or('object or array', () => [object, array]);
+  return h.or(() => [object, array]);
 });

@@ -6,20 +6,17 @@ import { TerminalError } from './TerminalError';
 export class Helpers<T extends string> {
   /**
    * create a rule that match a sequence of tokens
-   * @param name rule name
    * @param types sequence of token types to match
    * @param transform turn the list of tokens into AST node
    * @returns Rule
    */
   fromTokens<R = void>(
-    name: string,
     types: Array<Token<T>['type']>,
     transform: (tokens: Array<Token<T>>) => R | Error = (() => {
       /** empty */
     }) as any,
   ): Rule<R, T> {
     return {
-      name,
       consume: (tokens: Array<Token<T>>, cursor: Cursor) => {
         if (
           tokens.length - cursor.position >= types.length &&
@@ -40,9 +37,7 @@ export class Helpers<T extends string> {
           `unable to parse '${tokens
             .slice(cursor.position, cursor.position + types.length)
             .map((t) => t.value)
-            .join('')}' as ${name} ${tokens[
-            cursor.position
-          ]?.displayPosition()}`,
+            .join('')}' ${tokens[cursor.position]?.displayPosition()}`,
         );
       },
     };
@@ -56,14 +51,12 @@ export class Helpers<T extends string> {
    * @returns Rule
    */
   rule<R, X extends [Rule, ...Array<Rule>]>(
-    name: string,
     getSubRules: (self: Rule<R>) => X,
     transform: (values: ExtractedValues<X>) => R | Error,
   ): Rule<R> & { subRules: X } {
     const self: Rule<R> & { subRules: X } = {} as any;
 
     Object.assign(self, {
-      name,
       consume: (tokens: Token[], cursor: Cursor) => {
         const localCursor = cursor.clone();
         const values: ExtractedValues<X> = [] as any;
@@ -95,13 +88,11 @@ export class Helpers<T extends string> {
    * @returns Rule
    */
   or<X extends [Rule, ...Array<Rule>]>(
-    name: string | void,
     getSubRules: (self: X[number]) => X,
   ): Rule<ExtractedValue<X[number]>> & { subRules: X } {
     const self: Rule<ExtractedValue<X[number]>> & { subRules: X } = {} as any;
 
     Object.assign(self, {
-      name,
       consume: (tokens: Token[], cursor: Cursor) => {
         const localCursor = cursor.clone();
         for (const subRule of self.subRules) {
@@ -117,13 +108,9 @@ export class Helpers<T extends string> {
           return result;
         }
         return new Error(
-          `unable to parse '${tokens[cursor.position]?.value}'... as ${
-            name ||
-            self.subRules
-              .map((r) => r.name)
-              .reverse()
-              .join(' or ')
-          } ${tokens[cursor.position]?.displayPosition()}`,
+          `unable to parse '${tokens[cursor.position]?.value}'... ${tokens[
+            cursor.position
+          ]?.displayPosition()}`,
         );
       },
     });
@@ -139,7 +126,6 @@ export class Helpers<T extends string> {
    */
   optional<R>(subRule: Rule<R>): Rule<R | void> & { subRule: Rule<R> } {
     return {
-      name: subRule.name,
       consume: (tokens: Token[], cursor: Cursor) => {
         const localCursor = cursor.clone();
         const result = subRule.consume(tokens, localCursor);
@@ -160,7 +146,6 @@ export class Helpers<T extends string> {
    */
   lookahead<R>(subRule: Rule<R>): Rule<R> & { subRule: Rule<R> } {
     return {
-      name: subRule.name,
       consume: (tokens: Token[], cursor: Cursor) => {
         const result = subRule.consume(tokens, cursor.clone());
         return result instanceof TerminalError ? result.cause : result;
@@ -176,13 +161,8 @@ export class Helpers<T extends string> {
    * @param delimiter delimiter token
    * @returns Rule
    */
-  list<R>(
-    name: string,
-    subRule: Rule<R>,
-    delimiter: T,
-  ): Rule<R[]> & { subRule: Rule<R> } {
+  list<R>(subRule: Rule<R>, delimiter: T): Rule<R[]> & { subRule: Rule<R> } {
     return {
-      name,
       consume: (tokens: Token[], cursor: Cursor) => {
         const localCursor = new Cursor(cursor.position - 1);
         const values: R[] = [];
