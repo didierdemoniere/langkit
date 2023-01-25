@@ -1,8 +1,7 @@
 import { Token } from './Token';
 import { Cursor } from './Cursor';
 import { Rule, ExtractedValues, ExtractedValue } from './types';
-import { TerminalError } from './TerminalError';
-
+import { ParseError } from './ParseError';
 export class Helpers<T extends string> {
   /**
    * create a rule that match a sequence of tokens
@@ -28,16 +27,17 @@ export class Helpers<T extends string> {
             tokens.slice(cursor.position, cursor.position + types.length),
           );
           if (ast instanceof Error) {
-            return ast;
+            return new ParseError(ast.message, tokens[cursor.position]);
           }
           cursor.position += types.length;
           return ast;
         }
-        return new Error(
+        return new ParseError(
           `unable to parse '${tokens
             .slice(cursor.position, cursor.position + types.length)
             .map((t) => t.value)
             .join('')}' ${tokens[cursor.position]?.displayPosition()}`,
+          tokens[cursor.position],
         );
       },
     };
@@ -68,7 +68,10 @@ export class Helpers<T extends string> {
         }
         const endResult = transform(values);
         if (endResult instanceof Error) {
-          return endResult;
+          return new ParseError(
+            endResult.message,
+            tokens[localCursor.position],
+          );
         }
         cursor.position = localCursor.position;
         return endResult;
@@ -93,23 +96,28 @@ export class Helpers<T extends string> {
     Object.assign(self, {
       consume: (tokens: Token[], cursor: Cursor) => {
         const localCursor = cursor.clone();
+        let error: ParseError | undefined = undefined;
+
         for (const subRule of self.subRules) {
+          localCursor.position = cursor.position;
           const result = subRule.consume(tokens, localCursor);
-          if (result instanceof TerminalError) {
-            return result;
-          }
-          if (result instanceof Error) {
-            localCursor.position = cursor.position;
+          if (result instanceof ParseError) {
+            if (
+              typeof error === 'undefined' ||
+              (result.token &&
+                (result.token.pos.start.line > error.token.pos.start.line ||
+                  (result.token.pos.start.line === error.token.pos.start.line &&
+                    result.token.pos.start.col > error.token.pos.start.col)))
+            ) {
+              error = result;
+            }
             continue;
           }
           cursor.position = localCursor.position;
           return result;
         }
-        return new Error(
-          `unable to parse '${tokens[cursor.position]?.value}'... ${tokens[
-            cursor.position
-          ]?.displayPosition()}`,
-        );
+
+        return error;
       },
     });
 
@@ -145,8 +153,7 @@ export class Helpers<T extends string> {
   lookahead<R>(subRule: Rule<R>): Rule<R> & { subRule: Rule<R> } {
     return {
       consume: (tokens: Token[], cursor: Cursor) => {
-        const result = subRule.consume(tokens, cursor.clone());
-        return result instanceof TerminalError ? result.cause : result;
+        return subRule.consume(tokens, cursor.clone());
       },
       subRule,
     };
@@ -167,9 +174,7 @@ export class Helpers<T extends string> {
           localCursor.position++;
           const ast = subRule.consume(tokens, localCursor);
           if (ast instanceof Error) {
-            return values.length > 0 && !(ast instanceof TerminalError)
-              ? new TerminalError(ast)
-              : ast;
+            return ast;
           }
           values.push(ast);
         } while (tokens[localCursor.position]?.type === delimiter);

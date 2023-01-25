@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es6",
     "module": "commonjs",
-    "lib": ["es6"],
+    "lib": ["es2019"],
     "allowJs": true,
     "outDir": "build/main",
     "rootDir": "src",
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
-    "types": ["node", "jest"],
+    "types": ["jest"],
     "skipLibCheck": true
   },
   "include": ["src/**/*"],

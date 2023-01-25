@@ -25,7 +25,7 @@ export function createParser<X extends string, R>(
       throw result;
     }
     if (cursor.position < tokens.length) {
-      const unexpectedToken = tokens[cursor.position + 1];
+      const unexpectedToken = tokens[cursor.position];
       throw new Error(
         `unexpected token '${
           unexpectedToken.value
