@@ -45,7 +45,6 @@ export class Helpers<T extends string> {
 
   /**
    * create a rule that match a sequence of rule
-   * @param name rule name
    * @param getSubRules list of rules to match in order
    * @param transform turn the list of AST node into AST
    * @returns Rule
@@ -83,7 +82,6 @@ export class Helpers<T extends string> {
 
   /**
    * create an "OR" Rule where multiple rules may apply
-   * @param name rule name
    * @param getSubRules list of rules to try (from first to last)
    * @returns Rule
    */
@@ -156,7 +154,6 @@ export class Helpers<T extends string> {
 
   /**
    * create rule of repeated sub rule separated by delimiter
-   * @param name rule name
    * @param subRule repeated rule
    * @param delimiter delimiter token
    * @returns Rule

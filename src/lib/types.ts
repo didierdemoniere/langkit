@@ -4,7 +4,6 @@ import { Cursor } from './Cursor';
 type Without<T, U> = U extends T ? never : U;
 
 export interface Rule<T = any, X extends string = any> {
-  // name: string;
   consume: (tokens: Token<X>[], cursor: Cursor) => T | Error;
 }
 
